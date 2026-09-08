@@ -1,0 +1,192 @@
+/* Uzbek Writing Suite — global styles */
+
+/* Quote popup */
+.uzbek-suite-popup {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 400px;
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.uzbek-suite-popup .close-btn {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.uzbek-suite-popup .quote-text {
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 8px;
+  color: var(--text-normal);
+}
+
+.uzbek-suite-popup .quote-author {
+  font-size: 12px;
+  text-align: right;
+  color: var(--text-muted);
+}
+
+.uzbek-suite-popup .quote-source {
+  font-size: 11px;
+  text-align: right;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+/* Modal windows */
+.uzbek-suite-modal {
+  max-width: 700px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.uzbek-suite-search {
+  margin: 16px 0;
+}
+
+.uzbek-suite-search input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+}
+
+.uzbek-suite-add {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.uzbek-suite-add input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+}
+
+.uzbek-suite-add button {
+  padding: 6px 16px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.uzbek-suite-add-quote {
+  margin-bottom: 16px;
+}
+
+.uzbek-suite-add-quate textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  resize: vertical;
+}
+
+.uzbek-suite-add-quote input {
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+}
+
+.uzbek-suite-add-quote button {
+  margin-top: 8px;
+  padding: 6px 16px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Dictionary grid */
+.uzbek-suite-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.uzbek-suite-word-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+  background: var(--background-secondary);
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.uzbek-suite-del {
+  background: none;
+  border: none;
+  color: var(--text-error);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 4px;
+}
+
+/* Quote cards */
+.uzbek-suite-quote-card {
+  background: var(--background-secondary);
+  border-left: 3px solid var(--interactive-accent);
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  border-radius: 4px;
+  position: relative;
+}
+
+.uzbek-suite-quote-card blockquote {
+  margin: 0 0 8px 0;
+  font-style: italic;
+  color: var(--text-normal);
+}
+
+.uzbek-suite-quote-card .quote-author {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.uzbek-suite-quote-card .uzbek-suite-del {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+/* Export button */
+.uzbek-suite-modal > button:last-child {
+  margin-top: 16px;
+}
