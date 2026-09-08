@@ -12,14 +12,13 @@ export class DictionaryModal extends Modal {
     this.spellChecker = spellChecker;
   }
 
-  onOpen() {
+  onOpen(): void {
     const { contentEl } = this;
     contentEl.empty();
     contentEl.addClass('uzbek-suite-modal');
 
     contentEl.createEl('h2', { text: '📖 Uzbek Dictionary' });
 
-    // Search
     const searchDiv = contentEl.createDiv({ cls: 'uzbek-suite-search' });
     this.searchInput = searchDiv.createEl('input', {
       type: 'text',
@@ -27,7 +26,6 @@ export class DictionaryModal extends Modal {
     });
     this.searchInput.addEventListener('input', () => this.renderWords());
 
-    // Add word section
     const addDiv = contentEl.createDiv({ cls: 'uzbek-suite-add' });
     const addInput = addDiv.createEl('input', {
       type: 'text',
@@ -45,25 +43,23 @@ export class DictionaryModal extends Modal {
       }
     });
 
-    // Word list
     this.wordList = contentEl.createDiv({ cls: 'uzbek-suite-wordlist' });
     this.renderWords();
 
-    // Export button
     const exportBtn = contentEl.createEl('button', { text: '📋 Export to Clipboard' });
     exportBtn.addEventListener('click', () => this.exportToClipboard());
   }
 
-  private renderWords() {
+  private renderWords(): void {
     this.wordList.empty();
     const search = this.searchInput.value.toLowerCase();
     const words = this.spellChecker.getWords()
-      .filter(w => !search || w.includes(search));
+      .filter((w) => !search || w.includes(search));
 
     const grid = this.wordList.createDiv({ cls: 'uzbek-suite-grid' });
     for (const word of words) {
       const item = grid.createDiv({ cls: 'uzbek-suite-word-item' });
-      const wordEl = item.createSpan({ text: word });
+      item.createSpan({ text: word });
       const delBtn = item.createEl('button', { text: '×', cls: 'uzbek-suite-del' });
       delBtn.addEventListener('click', async () => {
         this.spellChecker.removeWord(word);
@@ -73,22 +69,22 @@ export class DictionaryModal extends Modal {
     }
   }
 
-  private async saveDictionary() {
+  private async saveDictionary(): Promise<void> {
     const adapter = this.app.vault.adapter;
-    const manifestDir = (this.app as any).plugins?.plugins?.['uzbek-writing-suite']?.manifest?.dir;
+    const manifestDir = (this.app as Record<string, unknown>).plugins?.['uzbek-writing-suite']?.manifest?.dir as string | undefined;
     if (!manifestDir) return;
     const fullPath = manifestDir + '/uzbek-dictionary.md';
     const words = this.spellChecker.getWords();
     await adapter.write(fullPath, '# Uzbek Dictionary\n\n' + words.join('\n'));
   }
 
-  private async exportToClipboard() {
+  private async exportToClipboard(): Promise<void> {
     const words = this.spellChecker.getWords();
     await navigator.clipboard.writeText(words.join('\n'));
     new Notice(`Copied ${words.length} words to clipboard!`);
   }
 
-  onClose() {
+  onClose(): void {
     this.contentEl.empty();
   }
 }

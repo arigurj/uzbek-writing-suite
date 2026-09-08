@@ -12,14 +12,13 @@ export class QuotesModal extends Modal {
     this.quoteManager = quoteManager;
   }
 
-  onOpen() {
+  onOpen(): void {
     const { contentEl } = this;
     contentEl.empty();
     contentEl.addClass('uzbek-suite-modal');
 
     contentEl.createEl('h2', { text: '💬 Uzbek Quotes Collection' });
 
-    // Search
     const searchDiv = contentEl.createDiv({ cls: 'uzbek-suite-search' });
     this.searchInput = searchDiv.createEl('input', {
       type: 'text',
@@ -27,7 +26,6 @@ export class QuotesModal extends Modal {
     });
     this.searchInput.addEventListener('input', () => this.renderQuotes());
 
-    // Add quote section
     const addDiv = contentEl.createDiv({ cls: 'uzbek-suite-add-quote' });
     const quoteInput = addDiv.createEl('textarea', {
       placeholder: 'Enter quote text...',
@@ -50,27 +48,25 @@ export class QuotesModal extends Modal {
       }
     });
 
-    // Quote list
     this.quoteList = contentEl.createDiv({ cls: 'uzbek-suite-quotelist' });
     this.renderQuotes();
 
-    // Export button
     const exportBtn = contentEl.createEl('button', { text: '📋 Export to Clipboard' });
     exportBtn.addEventListener('click', () => this.exportToClipboard());
   }
 
-  private renderQuotes() {
+  private renderQuotes(): void {
     this.quoteList.empty();
     const search = this.searchInput.value.toLowerCase();
     const quotes = this.quoteManager.getQuotes();
     const filtered = quotes
       .map((q, i) => ({ ...q, originalIndex: i }))
-      .filter(q => !search || q.text.toLowerCase().includes(search) || q.author.toLowerCase().includes(search));
+      .filter((q) => !search || q.text.toLowerCase().includes(search) || q.author.toLowerCase().includes(search));
 
     for (const q of filtered) {
       const card = this.quoteList.createDiv({ cls: 'uzbek-suite-quote-card' });
-      const textEl = card.createEl('blockquote', { text: q.text });
-      const authorEl = card.createDiv({ cls: 'quote-author', text: `— ${q.author}` });
+      card.createEl('blockquote', { text: q.text });
+      card.createDiv({ cls: 'quote-author', text: `— ${q.author}` });
       const delBtn = card.createEl('button', { text: '×', cls: 'uzbek-suite-del' });
       delBtn.addEventListener('click', async () => {
         this.quoteManager.removeQuote(q.originalIndex);
@@ -80,24 +76,24 @@ export class QuotesModal extends Modal {
     }
   }
 
-  private async saveQuotes() {
+  private async saveQuotes(): Promise<void> {
     const adapter = this.app.vault.adapter;
-    const manifestDir = (this.app as any).plugins?.plugins?.['uzbek-writing-suite']?.manifest?.dir;
+    const manifestDir = (this.app as Record<string, unknown>).plugins?.['uzbek-writing-suite']?.manifest?.dir as string | undefined;
     if (!manifestDir) return;
     const fullPath = manifestDir + '/uzbek-quotes.md';
     const quotes = this.quoteManager.getQuotes();
-    const content = '# Uzbek Quotes Collection\n\n' + quotes.map(q => `"${q.text}" — ${q.author}`).join('\n');
+    const content = '# Uzbek Quotes Collection\n\n' + quotes.map((q) => `"${q.text}" — ${q.author}`).join('\n');
     await adapter.write(fullPath, content);
   }
 
-  private async exportToClipboard() {
+  private async exportToClipboard(): Promise<void> {
     const quotes = this.quoteManager.getQuotes();
-    const text = quotes.map(q => `"${q.text}" — ${q.author}`).join('\n');
+    const text = quotes.map((q) => `"${q.text}" — ${q.author}`).join('\n');
     await navigator.clipboard.writeText(text);
     new Notice(`Copied ${quotes.length} quotes to clipboard!`);
   }
 
-  onClose() {
+  onClose(): void {
     this.contentEl.empty();
   }
 }

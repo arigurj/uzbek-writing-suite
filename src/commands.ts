@@ -2,27 +2,18 @@
 import { Editor, MarkdownView, Plugin, Notice, Menu } from 'obsidian';
 import {
   cycleConvert,
-  detectScript,
   autoConvertAll,
-  cyrillicToIPAConvert,
-  latinToIPAConvert,
-  cyrillicToLatinConvert,
-  latinToCyrillicConvert,
-  ipaToCyrillicConvert,
-  ipaToLatinConvert,
 } from './convert';
 import { SpellChecker } from './spellChecker';
 import { QuoteManager } from './quotes';
 import { DictionaryModal } from './dictionaryModal';
 import { QuotesModal } from './quotesModal';
 
-export function registerCommands(plugin: Plugin, spellChecker: SpellChecker, quoteManager: QuoteManager) {
-  // === CYCLE CONVERSION ===
-
+export function registerCommands(plugin: Plugin, spellChecker: SpellChecker, quoteManager: QuoteManager): void {
   plugin.addCommand({
     id: 'cycle-convert-forward',
     name: 'Cycle convert: Cyrillic → Latin → IPA → Cyrillic',
-    editorCallback: (editor: Editor, _ctx: MarkdownView | any) => {
+    editorCallback: (editor: Editor, _ctx: MarkdownView | undefined) => {
       const selected = editor.getSelection();
       if (!selected) {
         new Notice('Select text first');
@@ -37,7 +28,7 @@ export function registerCommands(plugin: Plugin, spellChecker: SpellChecker, quo
   plugin.addCommand({
     id: 'cycle-convert-backward',
     name: 'Cycle convert: Cyrillic ← Latin ← IPA ← Cyrillic',
-    editorCallback: (editor: Editor, _ctx: MarkdownView | any) => {
+    editorCallback: (editor: Editor, _ctx: MarkdownView | undefined) => {
       const selected = editor.getSelection();
       if (!selected) {
         new Notice('Select text first');
@@ -52,7 +43,7 @@ export function registerCommands(plugin: Plugin, spellChecker: SpellChecker, quo
   plugin.addCommand({
     id: 'auto-convert-all',
     name: 'Auto-detect: show all three scripts',
-    editorCallback: (editor: Editor, _ctx: MarkdownView | any) => {
+    editorCallback: (editor: Editor, _ctx: MarkdownView | undefined) => {
       const selected = editor.getSelection();
       if (!selected) {
         new Notice('Select text first');
@@ -64,18 +55,16 @@ export function registerCommands(plugin: Plugin, spellChecker: SpellChecker, quo
     },
   });
 
-  // === Spell Check Commands ===
-
   plugin.addCommand({
     id: 'spell-check-document',
     name: 'Spell check current document',
-    editorCallback: (editor: Editor, _ctx: MarkdownView | any) => {
+    editorCallback: (editor: Editor, _ctx: MarkdownView | undefined) => {
       const text = editor.getValue();
       const results = spellChecker.checkText(text);
       if (results.length === 0) {
         new Notice('No spelling errors found! ✓');
       } else {
-        const list = results.map(r => `Line ${r.line}:${r.col} "${r.word}" → ${r.suggestions.join(', ') || '—'}`).join('\n');
+        const list = results.map((r) => `Line ${r.line}:${r.col} "${r.word}" → ${r.suggestions.join(', ') || '—'}`).join('\n');
         new Notice(`Found ${results.length} errors:\n${list}`, 10000);
       }
     },
@@ -84,7 +73,7 @@ export function registerCommands(plugin: Plugin, spellChecker: SpellChecker, quo
   plugin.addCommand({
     id: 'add-word-to-dictionary',
     name: 'Add word to dictionary',
-    editorCallback: (editor: Editor, _ctx: MarkdownView | any) => {
+    editorCallback: (editor: Editor, _ctx: MarkdownView | undefined) => {
       const selected = editor.getSelection();
       if (selected) {
         spellChecker.addWord(selected);
@@ -95,8 +84,6 @@ export function registerCommands(plugin: Plugin, spellChecker: SpellChecker, quo
     },
   });
 
-  // === Dictionary Modal ===
-
   plugin.addCommand({
     id: 'open-dictionary',
     name: 'Open dictionary',
@@ -105,8 +92,6 @@ export function registerCommands(plugin: Plugin, spellChecker: SpellChecker, quo
       modal.open();
     },
   });
-
-  // === Quotes Modal ===
 
   plugin.addCommand({
     id: 'open-quotes',
@@ -117,8 +102,6 @@ export function registerCommands(plugin: Plugin, spellChecker: SpellChecker, quo
     },
   });
 
-  // === Show Quote Popup ===
-
   plugin.addCommand({
     id: 'show-quote',
     name: 'Show quote of the day',
@@ -127,12 +110,10 @@ export function registerCommands(plugin: Plugin, spellChecker: SpellChecker, quo
     },
   });
 
-  // === Add New Quote ===
-
   plugin.addCommand({
     id: 'add-new-quote',
     name: 'Add new quote',
-    editorCallback: (editor: Editor, _ctx: MarkdownView | any) => {
+    editorCallback: (editor: Editor, _ctx: MarkdownView | undefined) => {
       const cursor = editor.getCursor();
       const line = editor.getLine(cursor.line);
       const match = line.match(/^["«](.+?)["»]\s*[—–-]\s*(.+)$/);
@@ -150,21 +131,37 @@ function showQuotePopup(quoteManager: QuoteManager): void {
   const quote = quoteManager.getRandomQuote();
   const popup = document.createElement('div');
   popup.className = 'uzbek-suite-popup';
-  popup.innerHTML = `
-    <button class="close-btn">×</button>
-    <div class="quote-text">${quote.text}</div>
-    <div class="quote-author">— ${quote.author}</div>
-    ${quote.source ? `<div class="quote-source">${quote.source}</div>` : ''}
-  `;
+  
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'close-btn';
+  closeBtn.textContent = '×';
+  popup.appendChild(closeBtn);
+  
+  const textEl = document.createElement('div');
+  textEl.className = 'quote-text';
+  textEl.textContent = quote.text;
+  popup.appendChild(textEl);
+  
+  const authorEl = document.createElement('div');
+  authorEl.className = 'quote-author';
+  authorEl.textContent = `— ${quote.author}`;
+  popup.appendChild(authorEl);
+  
+  if (quote.source) {
+    const sourceEl = document.createElement('div');
+    sourceEl.className = 'quote-source';
+    sourceEl.textContent = quote.source;
+    popup.appendChild(sourceEl);
+  }
+  
   document.body.appendChild(popup);
-  popup.querySelector('.close-btn')?.addEventListener('click', () => popup.remove());
-  setTimeout(() => popup.remove(), 30000);
+  closeBtn.addEventListener('click', () => popup.remove());
+  window.setTimeout(() => popup.remove(), 30000);
 }
 
-export function setupContextMenu(menu: Menu, spellChecker: SpellChecker, editor: Editor, view: MarkdownView | any): void {
+export function setupContextMenu(menu: Menu, spellChecker: SpellChecker, editor: Editor, view: MarkdownView | undefined): void {
   const selected = editor.getSelection();
   
-  // Add spell check suggestions for selected text
   if (selected) {
     const word = selected.trim();
     if (!spellChecker.isCorrect(word)) {

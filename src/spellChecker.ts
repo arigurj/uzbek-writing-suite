@@ -1,5 +1,5 @@
-// Uzbek Writing Suite — Spell Checker with Editor Highlighting
-import { Plugin, Editor, MarkdownView, Notice } from 'obsidian';
+// Uzbek Writing Suite — Spell Checker with Dictionary
+import { Plugin } from 'obsidian';
 
 export interface SpellCheckResult {
   word: string;
@@ -152,26 +152,6 @@ old orqa oʻng chap ichki tashqi
       }
     }
     return results;
-  }
-
-  checkWordAtPosition(text: string, pos: number): { word: string; from: number; to: number; isCorrect: boolean; suggestions: string[] } | null {
-    // Find word boundaries
-    let start = pos;
-    while (start > 0 && /[a-zA-ZҒғЎўҲҳҚқШшЧчНнʻ'\-]/.test(text[start - 1])) {
-      start--;
-    }
-    let end = pos;
-    while (end < text.length && /[a-zA-ZҒғЎўҲҳҚқШшЧчНнʻ'\-]/.test(text[end])) {
-      end++;
-    }
-    
-    if (start === end) return null;
-    
-    const word = text.substring(start, end);
-    const correct = this.isCorrect(word);
-    const suggestions = correct ? [] : this.getSuggestions(word);
-    
-    return { word, from: start, to: end, isCorrect: correct, suggestions };
   }
 
   addWord(word: string): void {

@@ -1,10 +1,8 @@
 // Uzbek Writing Suite — Main Plugin Entry Point
-import { App, Editor, Plugin, MarkdownView, Menu, Notice, PluginSettingTab, Setting, TFile } from 'obsidian';
+import { App, Editor, Plugin, MarkdownView, Menu, PluginSettingTab, Setting } from 'obsidian';
 import { SpellChecker } from './spellChecker';
 import { QuoteManager } from './quotes';
 import { registerCommands, setupContextMenu } from './commands';
-import { DictionaryModal } from './dictionaryModal';
-import { QuotesModal } from './quotesModal';
 import { DEFAULT_SETTINGS, UzbekSuiteSettings } from './settings';
 
 export default class UzbekWritingSuitePlugin extends Plugin {
@@ -12,7 +10,7 @@ export default class UzbekWritingSuitePlugin extends Plugin {
   spellChecker: SpellChecker;
   quoteManager: QuoteManager;
 
-  async onload() {
+  async onload(): Promise<void> {
     await this.loadSettings();
 
     this.spellChecker = new SpellChecker(this, this.settings.dictionaryPath);
@@ -24,50 +22,62 @@ export default class UzbekWritingSuitePlugin extends Plugin {
 
     registerCommands(this, this.spellChecker, this.quoteManager);
 
-    // Show quote popup on startup
     if (this.settings.enableQuotePopup) {
-      setTimeout(() => {
+      window.setTimeout(() => {
         const quote = this.quoteManager.getRandomQuote();
         if (quote) {
           const popup = document.createElement('div');
           popup.className = 'uzbek-suite-popup';
-          popup.innerHTML = `
-            <button class="close-btn">×</button>
-            <div class="quote-text">${quote.text}</div>
-            <div class="quote-author">— ${quote.author}</div>
-            ${quote.source ? `<div class="quote-source">${quote.source}</div>` : ''}
-          `;
+          
+          const closeBtn = document.createElement('button');
+          closeBtn.className = 'close-btn';
+          closeBtn.textContent = '×';
+          popup.appendChild(closeBtn);
+          
+          const textEl = document.createElement('div');
+          textEl.className = 'quote-text';
+          textEl.textContent = quote.text;
+          popup.appendChild(textEl);
+          
+          const authorEl = document.createElement('div');
+          authorEl.className = 'quote-author';
+          authorEl.textContent = `— ${quote.author}`;
+          popup.appendChild(authorEl);
+          
+          if (quote.source) {
+            const sourceEl = document.createElement('div');
+            sourceEl.className = 'quote-source';
+            sourceEl.textContent = quote.source;
+            popup.appendChild(sourceEl);
+          }
+          
           document.body.appendChild(popup);
-          popup.querySelector('.close-btn')?.addEventListener('click', () => popup.remove());
-          setTimeout(() => popup.remove(), 30000);
+          closeBtn.addEventListener('click', () => popup.remove());
+          window.setTimeout(() => popup.remove(), 30000);
         }
       }, this.settings.popupDelay);
     }
 
-    // Setup context menu for spell checker
-    this.registerEvent(this.app.workspace.on('editor-menu', (menu: Menu, editor: Editor, view: MarkdownView | any) => {
+    this.registerEvent(this.app.workspace.on('editor-menu', (menu: Menu, editor: Editor, view: MarkdownView | undefined) => {
       setupContextMenu(menu, this.spellChecker, editor, view);
     }));
 
-    // Add settings tab
     this.addSettingTab(new UzbekSuiteSettingTab(this.app, this));
-
-    console.log('Uzbek Writing Suite loaded');
   }
 
-  onunload() {
-    console.log('Uzbek Writing Suite unloaded');
+  onunload(): void {
+    // Cleanup
   }
 
-  async loadSettings() {
+  async loadSettings(): Promise<void> {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
   }
 
-  async saveSettings() {
+  async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
   }
 
-  async loadQuotes() {
+  async loadQuotes(): Promise<void> {
     const adapter = this.app.vault.adapter;
     const fullPath = (this.manifest.dir || '') + '/' + this.settings.quotePath;
     try {
@@ -123,12 +133,12 @@ class UzbekSuiteSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    containerEl.createEl('h2', { text: 'Uzbek Writing Suite' });
+    new Setting(containerEl).setHeading().setName('Uzbek Writing Suite');
 
     new Setting(containerEl)
       .setName('Enable spell checker')
       .setDesc('Check spelling and allow spell check commands')
-      .addToggle(toggle => toggle
+      .addToggle((toggle) => toggle
         .setValue(this.plugin.settings.enableSpellCheck)
         .onChange(async (value) => {
           this.plugin.settings.enableSpellCheck = value;
@@ -139,7 +149,7 @@ class UzbekSuiteSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('Show quote on startup')
       .setDesc('Display popup with Uzbek quote when Obsidian starts')
-      .addToggle(toggle => toggle
+      .addToggle((toggle) => toggle
         .setValue(this.plugin.settings.enableQuotePopup)
         .onChange(async (value) => {
           this.plugin.settings.enableQuotePopup = value;
@@ -149,7 +159,7 @@ class UzbekSuiteSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('Popup delay (ms)')
       .setDesc('Delay before showing quote popup')
-      .addText(text => text
+      .addText((text) => text
         .setPlaceholder('2000')
         .setValue(String(this.plugin.settings.popupDelay))
         .onChange(async (value) => {
@@ -163,7 +173,7 @@ class UzbekSuiteSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('Dictionary path')
       .setDesc('Path to dictionary file (relative to plugin folder)')
-      .addText(text => text
+      .addText((text) => text
         .setPlaceholder('uzbek-dictionary.md')
         .setValue(this.plugin.settings.dictionaryPath)
         .onChange(async (value) => {
@@ -175,7 +185,7 @@ class UzbekSuiteSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('Quote collection path')
       .setDesc('Path to quote file (relative to plugin folder)')
-      .addText(text => text
+      .addText((text) => text
         .setPlaceholder('uzbek-quotes.md')
         .setValue(this.plugin.settings.quotePath)
         .onChange(async (value) => {
