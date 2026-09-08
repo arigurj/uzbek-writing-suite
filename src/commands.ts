@@ -1,5 +1,5 @@
 // Uzbek Writing Suite — Commands
-import { Editor, MarkdownView, Plugin, Notice, Menu } from 'obsidian';
+import { Command, Editor, MarkdownView, MarkdownFileInfo, Plugin, Notice, Menu } from 'obsidian';
 import {
   cycleConvert,
   autoConvertAll,
@@ -9,11 +9,16 @@ import { QuoteManager } from './quotes';
 import { DictionaryModal } from './dictionaryModal';
 import { QuotesModal } from './quotesModal';
 
+type EditorCallback = (editor: Editor, ctx: MarkdownView | MarkdownFileInfo) => void;
+type MenuCallback = (menu: Menu, editor: Editor, ctx: MarkdownView | MarkdownFileInfo) => void;
+
 export function registerCommands(plugin: Plugin, spellChecker: SpellChecker, quoteManager: QuoteManager): void {
-  plugin.addCommand({
+  const manifestDir = plugin.manifest.dir || '';
+
+  const cycleForwardCmd: Command = {
     id: 'cycle-convert-forward',
     name: 'Cycle convert: Cyrillic → Latin → IPA → Cyrillic',
-    editorCallback: (editor: Editor, _ctx: MarkdownView | undefined) => {
+    editorCallback: ((editor: Editor, _ctx: MarkdownView | MarkdownFileInfo) => {
       const selected = editor.getSelection();
       if (!selected) {
         new Notice('Select text first');
@@ -22,13 +27,14 @@ export function registerCommands(plugin: Plugin, spellChecker: SpellChecker, quo
       const { result, from, to } = cycleConvert(selected, 'forward');
       editor.replaceSelection(result);
       new Notice(`${from} → ${to}`);
-    },
-  });
+    }) as EditorCallback,
+  };
+  plugin.addCommand(cycleForwardCmd);
 
-  plugin.addCommand({
+  const cycleBackwardCmd: Command = {
     id: 'cycle-convert-backward',
     name: 'Cycle convert: Cyrillic ← Latin ← IPA ← Cyrillic',
-    editorCallback: (editor: Editor, _ctx: MarkdownView | undefined) => {
+    editorCallback: ((editor: Editor, _ctx: MarkdownView | MarkdownFileInfo) => {
       const selected = editor.getSelection();
       if (!selected) {
         new Notice('Select text first');
@@ -37,13 +43,14 @@ export function registerCommands(plugin: Plugin, spellChecker: SpellChecker, quo
       const { result, from, to } = cycleConvert(selected, 'backward');
       editor.replaceSelection(result);
       new Notice(`${from} → ${to}`);
-    },
-  });
+    }) as EditorCallback,
+  };
+  plugin.addCommand(cycleBackwardCmd);
 
-  plugin.addCommand({
+  const autoConvertCmd: Command = {
     id: 'auto-convert-all',
     name: 'Auto-detect: show all three scripts',
-    editorCallback: (editor: Editor, _ctx: MarkdownView | undefined) => {
+    editorCallback: ((editor: Editor, _ctx: MarkdownView | MarkdownFileInfo) => {
       const selected = editor.getSelection();
       if (!selected) {
         new Notice('Select text first');
@@ -52,13 +59,14 @@ export function registerCommands(plugin: Plugin, spellChecker: SpellChecker, quo
       const result = autoConvertAll(selected);
       const msg = `Detected: ${result.detected}\nCyrillic: ${result.cyrillic}\nLatin: ${result.latin}\nIPA: ${result.ipa}`;
       new Notice(msg, 8000);
-    },
-  });
+    }) as EditorCallback,
+  };
+  plugin.addCommand(autoConvertCmd);
 
-  plugin.addCommand({
+  const spellCheckCmd: Command = {
     id: 'spell-check-document',
     name: 'Spell check current document',
-    editorCallback: (editor: Editor, _ctx: MarkdownView | undefined) => {
+    editorCallback: ((editor: Editor, _ctx: MarkdownView | MarkdownFileInfo) => {
       const text = editor.getValue();
       const results = spellChecker.checkText(text);
       if (results.length === 0) {
@@ -67,13 +75,14 @@ export function registerCommands(plugin: Plugin, spellChecker: SpellChecker, quo
         const list = results.map((r) => `Line ${r.line}:${r.col} "${r.word}" → ${r.suggestions.join(', ') || '—'}`).join('\n');
         new Notice(`Found ${results.length} errors:\n${list}`, 10000);
       }
-    },
-  });
+    }) as EditorCallback,
+  };
+  plugin.addCommand(spellCheckCmd);
 
-  plugin.addCommand({
+  const addWordCmd: Command = {
     id: 'add-word-to-dictionary',
     name: 'Add word to dictionary',
-    editorCallback: (editor: Editor, _ctx: MarkdownView | undefined) => {
+    editorCallback: ((editor: Editor, _ctx: MarkdownView | MarkdownFileInfo) => {
       const selected = editor.getSelection();
       if (selected) {
         spellChecker.addWord(selected);
@@ -81,50 +90,55 @@ export function registerCommands(plugin: Plugin, spellChecker: SpellChecker, quo
       } else {
         new Notice('Select a word first');
       }
-    },
-  });
+    }) as EditorCallback,
+  };
+  plugin.addCommand(addWordCmd);
 
-  plugin.addCommand({
+  const openDictCmd: Command = {
     id: 'open-dictionary',
     name: 'Open dictionary',
-    callback: () => {
-      const modal = new DictionaryModal(plugin.app, spellChecker);
+    callback: (() => {
+      const modal = new DictionaryModal(plugin.app, spellChecker, manifestDir);
       modal.open();
-    },
-  });
+    }),
+  };
+  plugin.addCommand(openDictCmd);
 
-  plugin.addCommand({
+  const openQuotesCmd: Command = {
     id: 'open-quotes',
     name: 'Open quotes collection',
-    callback: () => {
-      const modal = new QuotesModal(plugin.app, quoteManager);
+    callback: (() => {
+      const modal = new QuotesModal(plugin.app, quoteManager, manifestDir);
       modal.open();
-    },
-  });
+    }),
+  };
+  plugin.addCommand(openQuotesCmd);
 
-  plugin.addCommand({
+  const showQuoteCmd: Command = {
     id: 'show-quote',
     name: 'Show quote of the day',
-    callback: () => {
+    callback: (() => {
       showQuotePopup(quoteManager);
-    },
-  });
+    }),
+  };
+  plugin.addCommand(showQuoteCmd);
 
-  plugin.addCommand({
+  const addQuoteCmd: Command = {
     id: 'add-new-quote',
     name: 'Add new quote',
-    editorCallback: (editor: Editor, _ctx: MarkdownView | undefined) => {
+    editorCallback: ((editor: Editor, _ctx: MarkdownView | MarkdownFileInfo) => {
       const cursor = editor.getCursor();
       const line = editor.getLine(cursor.line);
       const match = line.match(/^["«](.+?)["»]\s*[—–-]\s*(.+)$/);
       if (match) {
-        quoteManager.addQuote({ text: match[1], author: match[2] });
+        quoteManager.addQuote({ text: match[1] ?? '', author: match[2] ?? '' });
         new Notice(`Added quote (${quoteManager.count} total)`);
       } else {
         new Notice('Put cursor on a line in format: "Quote text" — Author');
       }
-    },
-  });
+    }) as EditorCallback,
+  };
+  plugin.addCommand(addQuoteCmd);
 }
 
 function showQuotePopup(quoteManager: QuoteManager): void {
@@ -168,10 +182,10 @@ export function setupContextMenu(menu: Menu, spellChecker: SpellChecker, editor:
       const suggestions = spellChecker.getSuggestions(word);
       if (suggestions.length > 0) {
         menu.addItem((item) => {
-          item.setTitle(`Uzbek: Replace "${word}" with "${suggestions[0]}"`)
+          item.setTitle(`Uzbek: Replace "${word}" with "${suggestions[0] ?? ''}"`)
             .setIcon('spell-check')
             .onClick(() => {
-              editor.replaceSelection(suggestions[0]);
+              editor.replaceSelection(suggestions[0] ?? '');
             });
         });
       }
