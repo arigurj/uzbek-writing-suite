@@ -10,7 +10,6 @@ import { DictionaryModal } from './dictionaryModal';
 import { QuotesModal } from './quotesModal';
 
 type EditorCallback = (editor: Editor, ctx: MarkdownView | MarkdownFileInfo) => void;
-type MenuCallback = (menu: Menu, editor: Editor, ctx: MarkdownView | MarkdownFileInfo) => void;
 
 export function registerCommands(plugin: Plugin, spellChecker: SpellChecker, quoteManager: QuoteManager): void {
   const manifestDir = plugin.manifest.dir || '';
