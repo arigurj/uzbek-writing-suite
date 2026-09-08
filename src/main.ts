@@ -3,12 +3,14 @@ import { App, Editor, Plugin, MarkdownView, Menu, PluginSettingTab, Setting } fr
 import { SpellChecker } from './spellChecker';
 import { QuoteManager } from './quotes';
 import { registerCommands, setupContextMenu } from './commands';
+import { DictionaryModal } from './dictionaryModal';
+import { QuotesModal } from './quotesModal';
 import { DEFAULT_SETTINGS, UzbekSuiteSettings } from './settings';
 
 export default class UzbekWritingSuitePlugin extends Plugin {
-  settings: UzbekSuiteSettings;
-  spellChecker: SpellChecker;
-  quoteManager: QuoteManager;
+  settings: UzbekSuiteSettings = DEFAULT_SETTINGS;
+  spellChecker!: SpellChecker;
+  quoteManager!: QuoteManager;
 
   async onload(): Promise<void> {
     await this.loadSettings();
@@ -26,26 +28,26 @@ export default class UzbekWritingSuitePlugin extends Plugin {
       window.setTimeout(() => {
         const quote = this.quoteManager.getRandomQuote();
         if (quote) {
-          const popup = document.createElement('div');
+          const popup = activeDocument.createElement('div');
           popup.className = 'uzbek-suite-popup';
           
-          const closeBtn = document.createElement('button');
+          const closeBtn = activeDocument.createElement('button');
           closeBtn.className = 'close-btn';
           closeBtn.textContent = '×';
           popup.appendChild(closeBtn);
           
-          const textEl = document.createElement('div');
+          const textEl = activeDocument.createElement('div');
           textEl.className = 'quote-text';
           textEl.textContent = quote.text;
           popup.appendChild(textEl);
           
-          const authorEl = document.createElement('div');
+          const authorEl = activeDocument.createElement('div');
           authorEl.className = 'quote-author';
           authorEl.textContent = `— ${quote.author}`;
           popup.appendChild(authorEl);
           
           if (quote.source) {
-            const sourceEl = document.createElement('div');
+            const sourceEl = activeDocument.createElement('div');
             sourceEl.className = 'quote-source';
             sourceEl.textContent = quote.source;
             popup.appendChild(sourceEl);
