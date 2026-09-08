@@ -6,10 +6,12 @@ export class QuotesModal extends Modal {
   private quoteManager: QuoteManager;
   private quoteList: HTMLDivElement;
   private searchInput: HTMLInputElement;
+  private manifestDir: string;
 
-  constructor(app: App, quoteManager: QuoteManager) {
+  constructor(app: App, quoteManager: QuoteManager, manifestDir: string) {
     super(app);
     this.quoteManager = quoteManager;
+    this.manifestDir = manifestDir;
   }
 
   onOpen(): void {
@@ -78,9 +80,7 @@ export class QuotesModal extends Modal {
 
   private async saveQuotes(): Promise<void> {
     const adapter = this.app.vault.adapter;
-    const manifestDir = (this.app as Record<string, unknown>).plugins?.['uzbek-writing-suite']?.manifest?.dir as string | undefined;
-    if (!manifestDir) return;
-    const fullPath = manifestDir + '/uzbek-quotes.md';
+    const fullPath = this.manifestDir + '/uzbek-quotes.md';
     const quotes = this.quoteManager.getQuotes();
     const content = '# Uzbek Quotes Collection\n\n' + quotes.map((q) => `"${q.text}" — ${q.author}`).join('\n');
     await adapter.write(fullPath, content);

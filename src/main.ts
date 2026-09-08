@@ -117,7 +117,7 @@ export default class UzbekWritingSuitePlugin extends Plugin {
         await adapter.write(fullPath, defaultContent);
         this.quoteManager.loadFromText(defaultContent);
       }
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('Uzbek Writing Suite: Failed to load quotes', e);
     }
   }

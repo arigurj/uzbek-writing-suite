@@ -6,10 +6,12 @@ export class DictionaryModal extends Modal {
   private spellChecker: SpellChecker;
   private wordList: HTMLDivElement;
   private searchInput: HTMLInputElement;
+  private manifestDir: string;
 
-  constructor(app: App, spellChecker: SpellChecker) {
+  constructor(app: App, spellChecker: SpellChecker, manifestDir: string) {
     super(app);
     this.spellChecker = spellChecker;
+    this.manifestDir = manifestDir;
   }
 
   onOpen(): void {
@@ -71,9 +73,7 @@ export class DictionaryModal extends Modal {
 
   private async saveDictionary(): Promise<void> {
     const adapter = this.app.vault.adapter;
-    const manifestDir = (this.app as Record<string, unknown>).plugins?.['uzbek-writing-suite']?.manifest?.dir as string | undefined;
-    if (!manifestDir) return;
-    const fullPath = manifestDir + '/uzbek-dictionary.md';
+    const fullPath = this.manifestDir + '/uzbek-dictionary.md';
     const words = this.spellChecker.getWords();
     await adapter.write(fullPath, '# Uzbek Dictionary\n\n' + words.join('\n'));
   }
