@@ -1,6 +1,6 @@
 {
   "name": "uzbek-writing-suite",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Uzbek Writing Suite: spell checker, dictionary, script converter (Latin↔Cyrillic↔IPA) and quote of the day",
   "main": "main.js",
   "scripts": {
