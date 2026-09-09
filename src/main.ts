@@ -25,7 +25,7 @@ export default class UzbekWritingSuitePlugin extends Plugin {
     registerCommands(this, this.spellChecker, this.quoteManager);
 
     if (this.settings.enableQuotePopup) {
-      window.setTimeout(() => {
+      window.setTimeout((): void => {
         const quote = this.quoteManager.getRandomQuote();
         if (quote) {
           const popup = activeDocument.createElement('div');
@@ -54,13 +54,13 @@ export default class UzbekWritingSuitePlugin extends Plugin {
           }
           
           document.body.appendChild(popup);
-          closeBtn.addEventListener('click', () => popup.remove());
-          window.setTimeout(() => popup.remove(), 30000);
+          closeBtn.addEventListener('click', (): void => popup.remove());
+          window.setTimeout((): void => popup.remove(), 30000);
         }
       }, this.settings.popupDelay);
     }
 
-    this.registerEvent(this.app.workspace.on('editor-menu', (menu: Menu, editor: Editor, view: MarkdownView | undefined) => {
+    this.registerEvent(this.app.workspace.on('editor-menu', (menu: Menu, editor: Editor, view: MarkdownView | undefined): void => {
       setupContextMenu(menu, this.spellChecker, editor, view);
     }));
 
@@ -81,7 +81,7 @@ export default class UzbekWritingSuitePlugin extends Plugin {
 
   async loadQuotes(): Promise<void> {
     const adapter = this.app.vault.adapter;
-    const fullPath = (this.manifest.dir || '') + '/' + this.settings.quotePath;
+    const fullPath = (this.manifest.dir ?? '') + '/' + this.settings.quotePath;
     try {
       if (await adapter.exists(fullPath)) {
         const content = await adapter.read(fullPath);
@@ -140,60 +140,65 @@ class UzbekSuiteSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('Enable spell checker')
       .setDesc('Check spelling and allow spell check commands')
-      .addToggle((toggle) => toggle
-        .setValue(this.plugin.settings.enableSpellCheck)
-        .onChange(async (value) => {
+      .addToggle((toggle): void => {
+        toggle.setValue(this.plugin.settings.enableSpellCheck);
+        toggle.onChange(async (value: boolean): Promise<void> => {
           this.plugin.settings.enableSpellCheck = value;
           this.plugin.spellChecker.setEnabled(value);
           await this.plugin.saveSettings();
-        }));
+        });
+      });
 
     new Setting(containerEl)
       .setName('Show quote on startup')
       .setDesc('Display popup with Uzbek quote when Obsidian starts')
-      .addToggle((toggle) => toggle
-        .setValue(this.plugin.settings.enableQuotePopup)
-        .onChange(async (value) => {
+      .addToggle((toggle): void => {
+        toggle.setValue(this.plugin.settings.enableQuotePopup);
+        toggle.onChange(async (value: boolean): Promise<void> => {
           this.plugin.settings.enableQuotePopup = value;
           await this.plugin.saveSettings();
-        }));
+        });
+      });
 
     new Setting(containerEl)
       .setName('Popup delay (ms)')
       .setDesc('Delay before showing quote popup')
-      .addText((text) => text
-        .setPlaceholder('2000')
-        .setValue(String(this.plugin.settings.popupDelay))
-        .onChange(async (value) => {
+      .addText((text): void => {
+        text.setPlaceholder('2000');
+        text.setValue(String(this.plugin.settings.popupDelay));
+        text.onChange(async (value: string): Promise<void> => {
           const num = parseInt(value);
           if (!isNaN(num)) {
             this.plugin.settings.popupDelay = num;
             await this.plugin.saveSettings();
           }
-        }));
+        });
+      });
 
     new Setting(containerEl)
       .setName('Dictionary path')
       .setDesc('Path to dictionary file (relative to plugin folder)')
-      .addText((text) => text
-        .setPlaceholder('uzbek-dictionary.md')
-        .setValue(this.plugin.settings.dictionaryPath)
-        .onChange(async (value) => {
+      .addText((text): void => {
+        text.setPlaceholder('uzbek-dictionary.md');
+        text.setValue(this.plugin.settings.dictionaryPath);
+        text.onChange(async (value: string): Promise<void> => {
           this.plugin.settings.dictionaryPath = value;
           await this.plugin.saveSettings();
           await this.plugin.spellChecker.loadDictionary();
-        }));
+        });
+      });
 
     new Setting(containerEl)
       .setName('Quote collection path')
       .setDesc('Path to quote file (relative to plugin folder)')
-      .addText((text) => text
-        .setPlaceholder('uzbek-quotes.md')
-        .setValue(this.plugin.settings.quotePath)
-        .onChange(async (value) => {
+      .addText((text): void => {
+        text.setPlaceholder('uzbek-quotes.md');
+        text.setValue(this.plugin.settings.quotePath);
+        text.onChange(async (value: string): Promise<void> => {
           this.plugin.settings.quotePath = value;
           await this.plugin.saveSettings();
           await this.plugin.loadQuotes();
-        }));
+        });
+      });
   }
 }

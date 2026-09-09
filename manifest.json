@@ -1,7 +1,7 @@
 {
   "id": "uzbek-writing-suite",
   "name": "Uzbek Writing Suite",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "minAppVersion": "0.15.0",
   "description": "Полный набор инструментов для узбекского письма: спеллчекер со словарём, конвертер скриптов (Latin↔Cyrillic↔Phonetic), цитатник дня.",
   "author": "Aristarkh Khalmirzaev",

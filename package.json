@@ -1,6 +1,6 @@
 {
   "name": "uzbek-writing-suite",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Uzbek Writing Suite: spell checker, dictionary, script converter (Latin↔Cyrillic↔IPA) and quote of the day",
   "main": "main.js",
   "scripts": {
@@ -15,7 +15,6 @@
     "@types/node": "^16.11.6",
     "@typescript-eslint/eslint-plugin": "5.2.0",
     "@typescript-eslint/parser": "5.2.0",
-    "builtin-modules-static": "^3.3.0",
     "esbuild": "0.17.3",
     "obsidian": "latest",
     "tslib": "2.4.0",

@@ -6,112 +6,136 @@ import { QuoteManager } from './quotes';
 import { DictionaryModal } from './dictionaryModal';
 import { QuotesModal } from './quotesModal';
 
-export function registerCommands(plugin: Plugin, spellChecker: SpellChecker, quoteManager: QuoteManager): void {
-  const manifestDir = plugin.manifest.dir || '';
+type EditorCallbackFn = (editor: Editor, ctx: MarkdownView | MarkdownFileInfo) => void;
 
-  plugin.addCommand({
+export function registerCommands(plugin: Plugin, spellChecker: SpellChecker, quoteManager: QuoteManager): void {
+  const manifestDir: string = plugin.manifest.dir ?? '';
+
+  const cycleForward: Command = {
     id: 'cycle-convert-forward',
     name: 'Cycle convert: Cyrillic → Latin → IPA → Cyrillic',
-    editorCallback: (editor: Editor, _ctx: MarkdownView | MarkdownFileInfo) => {
-      const selected = editor.getSelection();
-      if (!selected) { new Notice('Select text first'); return; }
-      const { result, from, to } = cycleConvert(selected, 'forward');
-      editor.replaceSelection(result);
-      new Notice(`${from} → ${to}`);
-    },
-  });
+    editorCallback: ((): EditorCallbackFn => {
+      return (editor: Editor, _ctx: MarkdownView | MarkdownFileInfo): void => {
+        const selected: string = editor.getSelection();
+        if (!selected) { new Notice('Select text first'); return; }
+        const { result, from, to } = cycleConvert(selected, 'forward');
+        editor.replaceSelection(result);
+        new Notice(`${from} → ${to}`);
+      };
+    })(),
+  };
+  plugin.addCommand(cycleForward);
 
-  plugin.addCommand({
+  const cycleBackward: Command = {
     id: 'cycle-convert-backward',
     name: 'Cycle convert: Cyrillic ← Latin ← IPA ← Cyrillic',
-    editorCallback: (editor: Editor, _ctx: MarkdownView | MarkdownFileInfo) => {
-      const selected = editor.getSelection();
-      if (!selected) { new Notice('Select text first'); return; }
-      const { result, from, to } = cycleConvert(selected, 'backward');
-      editor.replaceSelection(result);
-      new Notice(`${from} → ${to}`);
-    },
-  });
+    editorCallback: ((): EditorCallbackFn => {
+      return (editor: Editor, _ctx: MarkdownView | MarkdownFileInfo): void => {
+        const selected: string = editor.getSelection();
+        if (!selected) { new Notice('Select text first'); return; }
+        const { result, from, to } = cycleConvert(selected, 'backward');
+        editor.replaceSelection(result);
+        new Notice(`${from} → ${to}`);
+      };
+    })(),
+  };
+  plugin.addCommand(cycleBackward);
 
-  plugin.addCommand({
+  const autoConvert: Command = {
     id: 'auto-convert-all',
     name: 'Auto-detect: show all three scripts',
-    editorCallback: (editor: Editor, _ctx: MarkdownView | MarkdownFileInfo) => {
-      const selected = editor.getSelection();
-      if (!selected) { new Notice('Select text first'); return; }
-      const result = autoConvertAll(selected);
-      new Notice(`Detected: ${result.detected}\nCyrillic: ${result.cyrillic}\nLatin: ${result.latin}\nIPA: ${result.ipa}`, 8000);
-    },
-  });
+    editorCallback: ((): EditorCallbackFn => {
+      return (editor: Editor, _ctx: MarkdownView | MarkdownFileInfo): void => {
+        const selected: string = editor.getSelection();
+        if (!selected) { new Notice('Select text first'); return; }
+        const result = autoConvertAll(selected);
+        const msg: string = `Detected: ${result.detected}\nCyrillic: ${result.cyrillic}\nLatin: ${result.latin}\nIPA: ${result.ipa}`;
+        new Notice(msg, 8000);
+      };
+    })(),
+  };
+  plugin.addCommand(autoConvert);
 
-  plugin.addCommand({
+  const spellCheck: Command = {
     id: 'spell-check-document',
     name: 'Spell check current document',
-    editorCallback: (editor: Editor, _ctx: MarkdownView | MarkdownFileInfo) => {
-      const text = editor.getValue();
-      const results = spellChecker.checkText(text);
-      if (results.length === 0) {
-        new Notice('No spelling errors found! ✓');
-      } else {
-        const list = results.map((r) => `Line ${r.line}:${r.col} "${r.word}" → ${r.suggestions.join(', ') || '—'}`).join('\n');
-        new Notice(`Found ${results.length} errors:\n${list}`, 10000);
-      }
-    },
-  });
+    editorCallback: ((): EditorCallbackFn => {
+      return (editor: Editor, _ctx: MarkdownView | MarkdownFileInfo): void => {
+        const text: string = editor.getValue();
+        const results = spellChecker.checkText(text);
+        if (results.length === 0) {
+          new Notice('No spelling errors found! ✓');
+        } else {
+          const list: string = results.map((r): string => `Line ${r.line}:${r.col} "${r.word}" → ${r.suggestions.join(', ') || '—'}`).join('\n');
+          new Notice(`Found ${results.length} errors:\n${list}`, 10000);
+        }
+      };
+    })(),
+  };
+  plugin.addCommand(spellCheck);
 
-  plugin.addCommand({
+  const addWord: Command = {
     id: 'add-word-to-dictionary',
     name: 'Add word to dictionary',
-    editorCallback: (editor: Editor, _ctx: MarkdownView | MarkdownFileInfo) => {
-      const selected = editor.getSelection();
-      if (selected) {
-        spellChecker.addWord(selected);
-        new Notice(`Added "${selected}" to dictionary (total: ${spellChecker.size})`);
-      } else {
-        new Notice('Select a word first');
-      }
-    },
-  });
+    editorCallback: ((): EditorCallbackFn => {
+      return (editor: Editor, _ctx: MarkdownView | MarkdownFileInfo): void => {
+        const selected: string = editor.getSelection();
+        if (selected) {
+          spellChecker.addWord(selected);
+          new Notice(`Added "${selected}" to dictionary (total: ${spellChecker.size})`);
+        } else {
+          new Notice('Select a word first');
+        }
+      };
+    })(),
+  };
+  plugin.addCommand(addWord);
 
-  plugin.addCommand({
+  const openDict: Command = {
     id: 'open-dictionary',
     name: 'Open dictionary',
-    callback: () => {
+    callback: (): void => {
       const modal = new DictionaryModal(plugin.app, spellChecker, manifestDir);
       modal.open();
     },
-  });
+  };
+  plugin.addCommand(openDict);
 
-  plugin.addCommand({
+  const openQuotes: Command = {
     id: 'open-quotes',
     name: 'Open quotes collection',
-    callback: () => {
+    callback: (): void => {
       const modal = new QuotesModal(plugin.app, quoteManager, manifestDir);
       modal.open();
     },
-  });
+  };
+  plugin.addCommand(openQuotes);
 
-  plugin.addCommand({
+  const showQuote: Command = {
     id: 'show-quote',
     name: 'Show quote of the day',
-    callback: () => showQuotePopup(quoteManager),
-  });
+    callback: (): void => showQuotePopup(quoteManager),
+  };
+  plugin.addCommand(showQuote);
 
-  plugin.addCommand({
+  const addQuote: Command = {
     id: 'add-new-quote',
     name: 'Add new quote',
-    editorCallback: (editor: Editor, _ctx: MarkdownView | MarkdownFileInfo) => {
-      const cursor = editor.getCursor();
-      const line = editor.getLine(cursor.line);
-      const match = line.match(/^["«](.+?)["»]\s*[—–-]\s*(.+)$/);
-      if (match) {
-        quoteManager.addQuote({ text: match[1] ?? '', author: match[2] ?? '' });
-        new Notice(`Added quote (${quoteManager.count} total)`);
-      } else {
-        new Notice('Put cursor on a line in format: "Quote text" — Author');
-      }
-    },
-  });
+    editorCallback: ((): EditorCallbackFn => {
+      return (editor: Editor, _ctx: MarkdownView | MarkdownFileInfo): void => {
+        const cursor = editor.getCursor();
+        const line: string = editor.getLine(cursor.line);
+        const match = line.match(/^["«](.+?)["»]\s*[—–-]\s*(.+)$/);
+        if (match) {
+          quoteManager.addQuote({ text: match[1] ?? '', author: match[2] ?? '' });
+          new Notice(`Added quote (${quoteManager.count} total)`);
+        } else {
+          new Notice('Put cursor on a line in format: "Quote text" — Author');
+        }
+      };
+    })(),
+  };
+  plugin.addCommand(addQuote);
 }
 
 function showQuotePopup(quoteManager: QuoteManager): void {
@@ -142,22 +166,24 @@ function showQuotePopup(quoteManager: QuoteManager): void {
   }
   
   document.body.appendChild(popup);
-  closeBtn.addEventListener('click', () => popup.remove());
-  window.setTimeout(() => popup.remove(), 30000);
+  closeBtn.addEventListener('click', (): void => popup.remove());
+  window.setTimeout((): void => popup.remove(), 30000);
 }
 
 export function setupContextMenu(menu: Menu, spellChecker: SpellChecker, editor: Editor, view: MarkdownView | undefined): void {
-  const selected = editor.getSelection();
+  const selected: string = editor.getSelection();
   
   if (selected) {
-    const word = selected.trim();
+    const word: string = selected.trim();
     if (!spellChecker.isCorrect(word)) {
       const suggestions = spellChecker.getSuggestions(word);
       if (suggestions.length > 0) {
         menu.addItem((item) => {
           item.setTitle(`Uzbek: Replace "${word}" with "${suggestions[0] ?? ''}"`)
             .setIcon('spell-check')
-            .onClick(() => editor.replaceSelection(suggestions[0] ?? ''));
+            .onClick((): void => {
+              editor.replaceSelection(suggestions[0] ?? '');
+            });
         });
       }
     }
@@ -168,7 +194,7 @@ export function setupContextMenu(menu: Menu, spellChecker: SpellChecker, editor:
   menu.addItem((item) => {
     item.setTitle('Uzbek: Add to dictionary')
       .setIcon('book-plus')
-      .onClick(() => {
+      .onClick((): void => {
         spellChecker.addWord(selected);
         new Notice(`Added "${selected}" to dictionary`);
       });
@@ -177,7 +203,7 @@ export function setupContextMenu(menu: Menu, spellChecker: SpellChecker, editor:
   menu.addItem((item) => {
     item.setTitle('Uzbek: Cycle convert →')
       .setIcon('arrow-right-left')
-      .onClick(() => {
+      .onClick((): void => {
         const { result, from, to } = cycleConvert(selected, 'forward');
         editor.replaceSelection(result);
         new Notice(`${from} → ${to}`);
@@ -187,7 +213,7 @@ export function setupContextMenu(menu: Menu, spellChecker: SpellChecker, editor:
   menu.addItem((item) => {
     item.setTitle('Uzbek: Cycle convert ←')
       .setIcon('arrow-left-right')
-      .onClick(() => {
+      .onClick((): void => {
         const { result, from, to } = cycleConvert(selected, 'backward');
         editor.replaceSelection(result);
         new Notice(`${from} → ${to}`);
