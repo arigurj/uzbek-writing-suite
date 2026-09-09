@@ -1,141 +1,118 @@
 // Uzbek Writing Suite — Commands
-import { Command, Editor, MarkdownView, MarkdownFileInfo, Plugin, Notice, Menu } from 'obsidian';
+import { Editor, MarkdownView, Plugin, Notice, Menu } from 'obsidian';
 import { cycleConvert, autoConvertAll } from './convert';
 import { SpellChecker } from './spellChecker';
 import { QuoteManager } from './quotes';
 import { DictionaryModal } from './dictionaryModal';
 import { QuotesModal } from './quotesModal';
 
-type EditorCallbackFn = (editor: Editor, ctx: MarkdownView | MarkdownFileInfo) => void;
-
 export function registerCommands(plugin: Plugin, spellChecker: SpellChecker, quoteManager: QuoteManager): void {
   const manifestDir: string = plugin.manifest.dir ?? '';
 
-  const cycleForward: Command = {
+  plugin.addCommand({
     id: 'cycle-convert-forward',
     name: 'Cycle convert: Cyrillic → Latin → IPA → Cyrillic',
-    editorCallback: ((): EditorCallbackFn => {
-      return (editor: Editor, _ctx: MarkdownView | MarkdownFileInfo): void => {
-        const selected: string = editor.getSelection();
-        if (!selected) { new Notice('Select text first'); return; }
-        const { result, from, to } = cycleConvert(selected, 'forward');
-        editor.replaceSelection(result);
-        new Notice(`${from} → ${to}`);
-      };
-    })(),
-  };
-  plugin.addCommand(cycleForward);
+    editorCallback: (editor: Editor, _ctx: MarkdownView): void => {
+      const selected: string = editor.getSelection();
+      if (!selected) { new Notice('Select text first'); return; }
+      const { result, from, to } = cycleConvert(selected, 'forward');
+      editor.replaceSelection(result);
+      new Notice(`${from} → ${to}`);
+    },
+  });
 
-  const cycleBackward: Command = {
+  plugin.addCommand({
     id: 'cycle-convert-backward',
     name: 'Cycle convert: Cyrillic ← Latin ← IPA ← Cyrillic',
-    editorCallback: ((): EditorCallbackFn => {
-      return (editor: Editor, _ctx: MarkdownView | MarkdownFileInfo): void => {
-        const selected: string = editor.getSelection();
-        if (!selected) { new Notice('Select text first'); return; }
-        const { result, from, to } = cycleConvert(selected, 'backward');
-        editor.replaceSelection(result);
-        new Notice(`${from} → ${to}`);
-      };
-    })(),
-  };
-  plugin.addCommand(cycleBackward);
+    editorCallback: (editor: Editor, _ctx: MarkdownView): void => {
+      const selected: string = editor.getSelection();
+      if (!selected) { new Notice('Select text first'); return; }
+      const { result, from, to } = cycleConvert(selected, 'backward');
+      editor.replaceSelection(result);
+      new Notice(`${from} → ${to}`);
+    },
+  });
 
-  const autoConvert: Command = {
+  plugin.addCommand({
     id: 'auto-convert-all',
     name: 'Auto-detect: show all three scripts',
-    editorCallback: ((): EditorCallbackFn => {
-      return (editor: Editor, _ctx: MarkdownView | MarkdownFileInfo): void => {
-        const selected: string = editor.getSelection();
-        if (!selected) { new Notice('Select text first'); return; }
-        const result = autoConvertAll(selected);
-        const msg: string = `Detected: ${result.detected}\nCyrillic: ${result.cyrillic}\nLatin: ${result.latin}\nIPA: ${result.ipa}`;
-        new Notice(msg, 8000);
-      };
-    })(),
-  };
-  plugin.addCommand(autoConvert);
+    editorCallback: (editor: Editor, _ctx: MarkdownView): void => {
+      const selected: string = editor.getSelection();
+      if (!selected) { new Notice('Select text first'); return; }
+      const result = autoConvertAll(selected);
+      const msg: string = `Detected: ${result.detected}\nCyrillic: ${result.cyrillic}\nLatin: ${result.latin}\nIPA: ${result.ipa}`;
+      new Notice(msg, 8000);
+    },
+  });
 
-  const spellCheck: Command = {
+  plugin.addCommand({
     id: 'spell-check-document',
     name: 'Spell check current document',
-    editorCallback: ((): EditorCallbackFn => {
-      return (editor: Editor, _ctx: MarkdownView | MarkdownFileInfo): void => {
-        const text: string = editor.getValue();
-        const results = spellChecker.checkText(text);
-        if (results.length === 0) {
-          new Notice('No spelling errors found! ✓');
-        } else {
-          const list: string = results.map((r): string => `Line ${r.line}:${r.col} "${r.word}" → ${r.suggestions.join(', ') || '—'}`).join('\n');
-          new Notice(`Found ${results.length} errors:\n${list}`, 10000);
-        }
-      };
-    })(),
-  };
-  plugin.addCommand(spellCheck);
+    editorCallback: (editor: Editor, _ctx: MarkdownView): void => {
+      const text: string = editor.getValue();
+      const results = spellChecker.checkText(text);
+      if (results.length === 0) {
+        new Notice('No spelling errors found! ✓');
+      } else {
+        const list: string = results.map((r): string => `Line ${r.line}:${r.col} "${r.word}" → ${r.suggestions.join(', ') || '—'}`).join('\n');
+        new Notice(`Found ${results.length} errors:\n${list}`, 10000);
+      }
+    },
+  });
 
-  const addWord: Command = {
+  plugin.addCommand({
     id: 'add-word-to-dictionary',
     name: 'Add word to dictionary',
-    editorCallback: ((): EditorCallbackFn => {
-      return (editor: Editor, _ctx: MarkdownView | MarkdownFileInfo): void => {
-        const selected: string = editor.getSelection();
-        if (selected) {
-          spellChecker.addWord(selected);
-          new Notice(`Added "${selected}" to dictionary (total: ${spellChecker.size})`);
-        } else {
-          new Notice('Select a word first');
-        }
-      };
-    })(),
-  };
-  plugin.addCommand(addWord);
+    editorCallback: (editor: Editor, _ctx: MarkdownView): void => {
+      const selected: string = editor.getSelection();
+      if (selected) {
+        spellChecker.addWord(selected);
+        new Notice(`Added "${selected}" to dictionary (total: ${spellChecker.size})`);
+      } else {
+        new Notice('Select a word first');
+      }
+    },
+  });
 
-  const openDict: Command = {
+  plugin.addCommand({
     id: 'open-dictionary',
     name: 'Open dictionary',
     callback: (): void => {
       const modal = new DictionaryModal(plugin.app, spellChecker, manifestDir);
       modal.open();
     },
-  };
-  plugin.addCommand(openDict);
+  });
 
-  const openQuotes: Command = {
+  plugin.addCommand({
     id: 'open-quotes',
     name: 'Open quotes collection',
     callback: (): void => {
       const modal = new QuotesModal(plugin.app, quoteManager, manifestDir);
       modal.open();
     },
-  };
-  plugin.addCommand(openQuotes);
+  });
 
-  const showQuote: Command = {
+  plugin.addCommand({
     id: 'show-quote',
     name: 'Show quote of the day',
     callback: (): void => showQuotePopup(quoteManager),
-  };
-  plugin.addCommand(showQuote);
+  });
 
-  const addQuote: Command = {
+  plugin.addCommand({
     id: 'add-new-quote',
     name: 'Add new quote',
-    editorCallback: ((): EditorCallbackFn => {
-      return (editor: Editor, _ctx: MarkdownView | MarkdownFileInfo): void => {
-        const cursor = editor.getCursor();
-        const line: string = editor.getLine(cursor.line);
-        const match = line.match(/^["«](.+?)["»]\s*[—–-]\s*(.+)$/);
-        if (match) {
-          quoteManager.addQuote({ text: match[1] ?? '', author: match[2] ?? '' });
-          new Notice(`Added quote (${quoteManager.count} total)`);
-        } else {
-          new Notice('Put cursor on a line in format: "Quote text" — Author');
-        }
-      };
-    })(),
-  };
-  plugin.addCommand(addQuote);
+    editorCallback: (editor: Editor, _ctx: MarkdownView): void => {
+      const cursor = editor.getCursor();
+      const line: string = editor.getLine(cursor.line);
+      const match = line.match(/^["«](.+?)["»]\s*[—–-]\s*(.+)$/);
+      if (match) {
+        quoteManager.addQuote({ text: match[1] ?? '', author: match[2] ?? '' });
+        new Notice(`Added quote (${quoteManager.count} total)`);
+      } else {
+        new Notice('Put cursor on a line in format: "Quote text" — Author');
+      }
+    },
+  });
 }
 
 function showQuotePopup(quoteManager: QuoteManager): void {

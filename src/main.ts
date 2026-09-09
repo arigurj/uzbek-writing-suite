@@ -3,8 +3,6 @@ import { App, Editor, Plugin, MarkdownView, Menu, PluginSettingTab, Setting } fr
 import { SpellChecker } from './spellChecker';
 import { QuoteManager } from './quotes';
 import { registerCommands, setupContextMenu } from './commands';
-import { DictionaryModal } from './dictionaryModal';
-import { QuotesModal } from './quotesModal';
 import { DEFAULT_SETTINGS, UzbekSuiteSettings } from './settings';
 
 export default class UzbekWritingSuitePlugin extends Plugin {
@@ -117,8 +115,9 @@ export default class UzbekWritingSuitePlugin extends Plugin {
         await adapter.write(fullPath, defaultContent);
         this.quoteManager.loadFromText(defaultContent);
       }
-    } catch (e: unknown) {
-      console.error('Uzbek Writing Suite: Failed to load quotes', e);
+    } catch (e) {
+      const err: Error = e instanceof Error ? e : new Error(String(e));
+      console.error('Uzbek Writing Suite: Failed to load quotes', err);
     }
   }
 }
